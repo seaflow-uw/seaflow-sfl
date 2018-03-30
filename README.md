@@ -29,3 +29,6 @@ The metadata contains the following information:
 - FLOW RATE: flow rate of the sample (µL/min) based on stream pressure
 
 - EVENT RATE: number of events recorded per second (should be below 18,000 for quality data)
+
+
+*** François Ribalet, Chris Berthiaume, Megan Schatz and Sophie Clayton contributed to this project ***
