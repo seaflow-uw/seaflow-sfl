@@ -22,7 +22,7 @@ The metadata contains the following information:
 
 - PAR: Photosynthetic Active Radiations above surface water (µmol/m2/s)
 
-- BULK RED: bulk chlorophyll (volt or mg/m3)
+- BULK RED: bulk red fluorescence measured by SeaFlow (unitless)
 
 - STREAM PRESSURE: pressure of the sample (psi), usually set at 12
 
