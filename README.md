@@ -1,6 +1,6 @@
 # seaflow-sfl
 
-SFL files contains metadata for each SeaFlow files recorded during the cruise. These metadata are provided by the ship's data broadcast system and are being copied to the SeaFlow instrument as is (uncurated).
+SFL files contains metadata for each SeaFlow files recorded during the cruise. These metadata are provided by the ship's data broadcast system and are being copied to the SeaFlow instrument as is.
 
 The metadata contains the following information:
 
@@ -8,7 +8,7 @@ The metadata contains the following information:
 
 - DATE: data and time in GMT
 
-- FILE DURATION: acquisition time (in sec, usually 180s)
+- FILE DURATION: acquisition time (sec), usually set at 180
 
 - LAT: latitude (deg N)
 
@@ -28,7 +28,8 @@ The metadata contains the following information:
 
 - FLOW RATE: flow rate of the sample (µL/min) based on stream pressure
 
-- EVENT RATE: number of events recorded per second (should be below 18,000 for quality data)
+- EVENT RATE: number of events (i.e., particles) recorded per second (should be below 18,000 for quality data)
 
+- CHL: Chlorophyll fluorescence (mg/m3)
 
 ***François Ribalet, Chris Berthiaume, Megan Schatz and Sophie Clayton contributed to this project***
