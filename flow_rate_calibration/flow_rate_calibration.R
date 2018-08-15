@@ -1,41 +1,30 @@
-library(lmodel2)
-
 ### Path to the Git repository
 setwd("~/Documents/DATA/Codes/seaflow-sfl")
 
-fr <- read.csv("flow_rate_calibration/FLOW_RATEcalibration.csv")
+inst <- "751" # or "751"
+
+fr <- read.csv(paste0("flow_rate_calibration/",inst,"-streampressure.csv"))
 fr$fr <- 60*(fr$weight - fr$tare)/fr$time #calculate flow rate (ml/min)
 
 
-### linear regression type II
-reg <- lmodel2(fr ~ measured.pressure, data=log10(fr[,c("fr", "measured.pressure")]))
+### linear regression
+reg <- lm(fr ~ poly(measured.pressure, 1, raw=T), data=log(fr[,c("fr", "measured.pressure")],10))
+summary(reg)
 
+save(reg, file=paste0("flow_rate_calibration/lm_",inst))
 
-psi <- 12
-FR <- 10^reg$regression.results$Intercept[1]*psi^reg$regression.results$Slope[1]
-FR_2.5 <- 10^reg$confidence.intervals[1,2]*psi^reg$confidence.intervals[1,4]
-FR_97.5 <- 10^reg$confidence.intervals[1,3]*psi^reg$confidence.intervals[1,5]
-error <- 100*mean(abs(c(1-FR_97.5/FR,1-FR_2.5/FR))) #calculate % error in FR determination
-
-png("flow_rate_calibration/FlowRate-calibration.png",width=12, height=12, unit='in', res=100)
+png(paste0("flow_rate_calibration/",inst,"-flowrate.png"),width=12, height=12, unit='in', res=100)
 
 par(mfrow=c(1,1), cex=1.4)
-  plot(fr$measured.pressure , fr$fr, bg=adjustcolor('red3',0.4), pch=21, cex=2, xlab='pressure (psi)', ylab="Flow Rate (ml/min)", log='xy')
+  plot(fr$measured.pressure , fr$fr, bg=adjustcolor('red3',0.4), pch=21, cex=2, xlab='pressure (psi)', ylab="Flow Rate (ml/min)", log='xy', main=paste("#",inst))
   par(new=T)
   plot(log10(fr$measured.pressure), log10(fr$fr), yaxt='n',xaxt='n',xlab=NA, ylab=NA,pch=NA, bty='n')
-  abline(b=reg$regression.results$Slope[1], a=reg$regression.results$Intercept[1], col=2,lwd=2) # 50%
-  abline(b=reg$confidence.intervals[1,4], a=reg$confidence.intervals[1,2], col='grey',lwd=2) # 2.5%
-  abline(b=reg$confidence.intervals[1,5], a=reg$confidence.intervals[1,3], col='grey',lwd=2) # 97.5%
-  legend("topleft", legend=bquote(paste("FR=",.(round(10^reg$regression.results$Intercept[1],3)),"(psi"^{.(round(reg$regression.results$Slope[1],3))},")")), bty='n',cex=2)
-  legend("bottomright", bty='n',cex=2, legend=bquote(paste(.(round(psi))," psi =",.(round(FR,1)),"(+/- ",.(round(error,1)),"%) ml/min")))
+  lines(x=log10(fr$measured.pressure),predict(reg, newdata=data.frame(measured.pressure=log10(fr$measured.pressure)),interval='predict')[,"fit"], col='red3',lwd=2 )
+  lines(x=log10(fr$measured.pressure),predict(reg, newdata=data.frame(measured.pressure=log10(fr$measured.pressure)),interval='predict')[,"lwr"], col='grey',lwd=2 )
+  lines(x=log10(fr$measured.pressure),predict(reg, newdata=data.frame(measured.pressure=log10(fr$measured.pressure)),interval='predict')[,"upr"], col='grey',lwd=2 )
+  legend("bottomright", legend=bquote(paste("FR=",.(round(10^reg$coefficients[1],3)),"(psi"^{.(round(reg$coefficients[2],3))},")")), bty='n',cex=2)
+  abline(v=log10(12),col='green')
+  abline(h=predict(reg, newdata=data.frame(measured.pressure=log10(12)),interval='predict')[,"fit"], col='green')
+  legend('top',paste(round(10^predict(reg, newdata=data.frame(measured.pressure=log10(12)),interval='predict'),1)), bty='n', text.font=c(1,2,1))
 
 dev.off()
-
-
-### Save equation for conversion from stream pressure (psi) to flow rate (ml/min)
-df1 <- data.frame(inst=740, expo=reg$regression.results$Slope[1],expo_97.5=reg$confidence.intervals[1,5],expo_2.5=reg$confidence.intervals[1,4],coeff=10^reg$regression.results$Intercept[1], coeff_97.5=10^reg$confidence.intervals[1,3],coeff_2.5=10^reg$confidence.intervals[1,2])
-# while we wait to do the calibration for #751, we are assuming identical calibration
-df2 <- data.frame(inst=751, expo=reg$regression.results$Slope[1],expo_97.5=reg$confidence.intervals[1,5],expo_2.5=reg$confidence.intervals[1,4],coeff=10^reg$regression.results$Intercept[1], coeff_97.5=10^reg$confidence.intervals[1,3],coeff_2.5=10^reg$confidence.intervals[1,2])
-df <- rbind(df1, df2
-
-write.csv(df,file=paste0("flow_rate_calibration/seaflow_FR-calibration.csv"), row.names=FALSE)
