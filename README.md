@@ -26,8 +26,6 @@ The metadata contains the following information:
 
 - STREAM PRESSURE: pressure of the sample (psi), usually set at 12
 
-- FLOW RATE: flow rate of the sample (µL/min) based on stream pressure
-
 - EVENT RATE: number of events (i.e., particles) recorded per second (should be below 18,000 for quality data)
 
 - CHL: Chlorophyll fluorescence (mg/m3)
