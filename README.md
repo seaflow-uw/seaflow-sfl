@@ -28,6 +28,5 @@ The metadata contains the following information:
 
 - EVENT RATE: number of events (i.e., particles) recorded per second (should be below 18,000 for quality data)
 
-- CHL: Chlorophyll fluorescence (mg/m3)
 
 ***François Ribalet, Chris Berthiaume, Sophie Clayton, Megan Schatz and Jarred Swalwell contributed to this project***
