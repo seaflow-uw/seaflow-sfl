@@ -1,5 +1,7 @@
 library(tidyverse)
 library(plotly)
+library(viridis)
+library(googlesheets)
 
 setwd("~/Documents/DATA/Codes/seaflow-sfl/")
 
@@ -33,23 +35,47 @@ geo <- list(
 )
 
 
-
 read_sfl <- function(x){
   df <- read_delim(x, delim="\t")
-  cruise <- sub(".sfl", "", basename(x))
-  df$cruise <- cruise
+
+    #parse cruise name and serial number of instrument
+    exp <- unlist(list(strsplit(sub(".sfl", "", basename(x)),"_")))
+
+      if(length(exp) > 2) { cruise <- paste(exp[1],exp[2],sep="_")
+      } else if(length(exp) ==2) cruise <- exp[1]
+      inst <-  sub(".sfl","",exp[length(exp)])
+      cruise.id <- seaflow.meta[which(seaflow.meta$cruise == cruise),'Cruise ID']
+
+
+  df$cruise <- unlist(cruise.id)
+  df$inst <- inst
   return(df)
 }
 
+
+
+
+
+# Get official cruise ID
+seaflow.meta <- gs_read(gs_title("SeaFlow\ instrument\ log", verbose = FALSE))
+
+
+# load SFL
 list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 
+# Bin data by "1 hour"
 sfl2 <- sfl %>%
         group_by(cruise, DATE= cut(DATE, breaks="1 hour")) %>%
         summarize(LAT = mean(LAT), LON = mean(LON))
 
+# order cruise list chronologically
+sfl2 <- sfl2[order(sfl2$DATE),]
+sfl2$cruise <- factor(sfl2$cruise, levels = unique(sfl2$cruise))
 
-p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise) %>%
-  layout(showlegend = F, legend = list(font = list(size = 10)), geo = geo)
+#plot
+p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100)) %>%
+  layout(showlegend=T, legend = list(orientation='h'), geo = geo)
 
-plotly_IMAGE(p, format = "png", out_file = "cruise-track.png")
+#save static plot
+plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
