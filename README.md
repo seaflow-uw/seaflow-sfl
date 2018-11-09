@@ -31,4 +31,4 @@ The metadata contains the following information:
 
 ![alt text](cruise-track.png "SeaFlow cruise tracks  from 40 different cruises")
 
-***François Ribalet, Chris Berthiaume, Sophie Clayton, Megan Schatz and Jarred Swalwell contributed to this project***
+***François Ribalet, Chris Berthiaume, Annette Hynes, Sophie Clayton, Megan Schatz and Jarred Swalwell contributed to this project***

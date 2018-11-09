@@ -35,6 +35,11 @@ geo <- list(
 )
 
 
+# Get official cruise ID
+seaflow.meta <- gs_read(gs_title("SeaFlow\ instrument\ log", verbose = FALSE))
+
+
+
 read_sfl <- function(x){
   df <- read_delim(x, delim="\t")
 
@@ -56,10 +61,6 @@ read_sfl <- function(x){
 
 
 
-# Get official cruise ID
-seaflow.meta <- gs_read(gs_title("SeaFlow\ instrument\ log", verbose = FALSE))
-
-
 # load SFL
 list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
@@ -67,15 +68,15 @@ sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 # Bin data by "1 hour"
 sfl2 <- sfl %>%
         group_by(cruise, DATE= cut(DATE, breaks="1 hour")) %>%
-        summarize(LAT = mean(LAT), LON = mean(LON))
+        summarize(LAT = mean(LAT, na.rm=T), LON = mean(LON, na.rm=T))
 
 # order cruise list chronologically
 sfl2 <- sfl2[order(sfl2$DATE),]
 sfl2$cruise <- factor(sfl2$cruise, levels = unique(sfl2$cruise))
 
 #plot
-p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100)) %>%
+p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
   layout(showlegend=T, legend = list(orientation='h'), geo = geo)
-
+p
 #save static plot
 plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
