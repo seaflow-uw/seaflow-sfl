@@ -29,6 +29,6 @@ The metadata contains the following information:
 - EVENT RATE: number of events (i.e., particles) recorded per second (should be below 18,000 for quality data)
 
 
-![alt text](cruise-track.png "SeaFlow data sets that have been curated")
+![alt text](cruise-track.png "SeaFlow cruise tracks")
 
 ***François Ribalet, Chris Berthiaume, Annette Hynes, Sophie Clayton, Megan Schatz and Jarred Swalwell contributed to this project***
