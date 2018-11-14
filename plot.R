@@ -68,7 +68,7 @@ sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 # Bin data by "1 hour"
 sfl2 <- sfl %>%
         group_by(cruise, DATE= cut(DATE, breaks="1 hour")) %>%
-        summarize(LAT = mean(LAT, na.rm=T), LON = mean(LON, na.rm=T))
+        summarise(LAT = mean(LAT, na.rm=T), LON = mean(LON, na.rm=T))
 
 # order cruise list chronologically
 sfl2 <- sfl2[order(sfl2$DATE),]
@@ -76,7 +76,10 @@ sfl2$cruise <- factor(sfl2$cruise, levels = unique(sfl2$cruise))
 
 #plot
 p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
-  layout(showlegend=T, legend = list(orientation='h'), geo = geo)
+  layout(showlegend=T, legend = list(orientation='h', alpha=1), geo = geo)
 p
-#save static plot
+#save static plot (png)
 plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
+
+#save dynamic plot (html)
+htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
