@@ -50,7 +50,7 @@ read_sfl <- function(x){
       } else if(length(exp) ==2) cruise <- exp[1]
       inst <-  sub(".sfl","",exp[length(exp)])
       cruise.id <- seaflow.meta[which(seaflow.meta$cruise == cruise),'Cruise ID']
-
+      print(cruise)
 
   df$cruise <- unlist(cruise.id)
   df$inst <- inst
