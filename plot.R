@@ -83,3 +83,35 @@ plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, hei
 
 #save dynamic plot (html)
 htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
+
+
+
+
+
+
+
+
+
+
+
+
+# Number of Observations per location
+
+
+sfl <- subset(sfl, cruise != "TN250")
+
+sfl3 <- sfl %>%
+        group_by(LAT=round(LAT), LON=round(LON)) %>%
+        summarise(samples=length(LAT))
+
+      p <- sfl3 %>%
+          ggplot() + geom_point(ggplot2::aes_string('LON', 'LAT', fill='samples'), size=3, pch=22, alpha=1,show.legend=T) +
+
+          borders('world', fill = 'gray80') +
+          labs(x='Longitude', y= 'Latitude') +
+          coord_fixed(ratio = 1, xlim = c(-170,-110), ylim=c(10,60)) +
+          scale_fill_gradientn(colors=viridis::viridis(100), trans='log10') +
+          scale_color_gradientn(colors=viridis::viridis(100), trans='log10') +
+          theme_bw()
+
+      p
