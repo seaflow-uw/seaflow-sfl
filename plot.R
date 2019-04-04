@@ -65,6 +65,12 @@ read_sfl <- function(x){
 list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 
+
+
+
+
+
+
 # Bin data by "1 hour"
 sfl2 <- sfl %>%
         group_by(cruise, DATE= cut(DATE, breaks="1 hour")) %>%
@@ -95,23 +101,78 @@ htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
 
 
 
-# Number of Observations per location
+### DATA shared on Zenodo (as published in ScientificData)
 
 
-sfl <- subset(sfl, cruise != "TN250")
+sfl2 <- subset(sfl, cruise == "TN248" |
+                    cruise == "CN11ID" |
+                    cruise == "TN271" |
+                    cruise == "TN280" |
+                    cruise == "CN12ID" |
+                    cruise == "TN292" |
+                    cruise == "CN13ID" |
+                    cruise == "KM1427" |
+                    cruise == "KM1427" |
+                    cruise == "KM1502" |
+                    cruise == "KM1508" |
+                    cruise == "KM1510" |
+                    cruise == "KM1512" |
+                    cruise == "KOK1512" |
+                    cruise == "KOK1515" |
+                    cruise == "KM1518" |
+                    cruise == "KM1601" |
+                    cruise == "KM1602" |
+                    cruise == "KM1603" |
+                    cruise == "KOK1604" |
+                    cruise == "HOE-Legacy 4" |
+                    cruise == "KOK1608" |
+                    cruise == "KOK1609" |
+                    cruise == "KM1708" |
+                    cruise == "KM1709"
+                  )
 
-sfl3 <- sfl %>%
+
+# Number of data file
+print(paste(nrow(sfl2), "data files collected"))
+
+# Distance covered
+library(geosphere)
+
+D <- NULL
+for(i in 2:nrow(sfl2)){
+message(round(100*i/nrow(sfl2)), "% completed \r", appendLF=FALSE)
+d <- distm(sfl2[(i-1):i,c("LON","LAT")], fun = distHaversine)[1,2]
+D <- c(D, d)
+flush.console()
+}
+
+# Sum distance along track
+id <- which(20*D*0.00053996 > 20) # 1 m = 0.00053996 knots (nautical mile / h)
+print(paste(round(sum(D[-id]/1000, na.rm=T)), "km covered"))
+hist(D[-id]/1000)
+
+# Speed of ship while underway
+id2 <- which(20*D*0.00053996 > 20 | D/1000 < 0.2)
+print(paste(round(mean(D[-id2]/1000, na.rm=T),1), "km covered in 3 minutes"))
+print(paste(round(sum(D[-id2]/1000, na.rm=T)), "km covered while underway"))
+print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
+
+
+
+
+
+sfl3 <- sfl2 %>%
         group_by(LAT=round(LAT), LON=round(LON)) %>%
         summarise(samples=length(LAT))
 
       p <- sfl3 %>%
-          ggplot() + geom_point(ggplot2::aes_string('LON', 'LAT', fill='samples'), size=3, pch=22, alpha=1,show.legend=T) +
-
+          ggplot() + geom_point(ggplot2::aes_string('LON', 'LAT', col='samples'), size=2, pch=15, alpha=1,show.legend=T) +
           borders('world', fill = 'gray80') +
-          labs(x='Longitude', y= 'Latitude') +
+          labs(x='Longitude (E)', y= 'Latitude (N)') +
           coord_fixed(ratio = 1, xlim = c(-170,-110), ylim=c(10,60)) +
-          scale_fill_gradientn(colors=viridis::viridis(100), trans='log10') +
-          scale_color_gradientn(colors=viridis::viridis(100), trans='log10') +
-          theme_bw()
-
+          scale_color_gradientn(colours=viridis::viridis(100), trans='log10') +
+          theme_bw() +
+          geom_point(aes(x=-158, y=23), col='red3',size=2, pch=0)
       p
+
+      ggsave("Figure1.png", width=6, height=6, unit='in', dpi=300)
