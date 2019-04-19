@@ -128,7 +128,8 @@ sfl2 <- subset(sfl, cruise == "TN248" |
                     cruise == "KOK1608" |
                     cruise == "KOK1609" |
                     cruise == "KM1708" |
-                    cruise == "KM1709"
+                    cruise == "KM1709" |
+                    cruise == "KOK1806"
                   )
 
 
@@ -158,15 +159,19 @@ print(paste(round(sum(D[-id2]/1000, na.rm=T)), "km covered while underway"))
 print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
 
 
+# files collected per cruise
+sfl4 <- sfl2 %>%
+        group_by(cruise=cruise) %>%
+        summarise(samples=length(cruise))
+sum(sfl4$samples)
 
-
-
+# number of samples per degree LAT/LON
 sfl3 <- sfl2 %>%
         group_by(LAT=round(LAT), LON=round(LON)) %>%
-        summarise(samples=length(LAT))
+        summarise(datafiles=length(LAT))
 
       p <- sfl3 %>%
-          ggplot() + geom_point(ggplot2::aes_string('LON', 'LAT', col='samples'), size=2, pch=15, alpha=1,show.legend=T) +
+          ggplot() + geom_point(ggplot2::aes_string('LON', 'LAT', col='datafiles'), size=2, pch=15, alpha=1,show.legend=T) +
           borders('world', fill = 'gray80') +
           labs(x='Longitude (E)', y= 'Latitude (N)') +
           coord_fixed(ratio = 1, xlim = c(-170,-110), ylim=c(10,60)) +
