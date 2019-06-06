@@ -48,9 +48,9 @@ read_sfl <- function(x){
 
       if(length(exp) > 2) { cruise <- paste(exp[1],exp[2],sep="_")
       } else if(length(exp) ==2) cruise <- exp[1]
+      print(cruise)
       inst <-  sub(".sfl","",exp[length(exp)])
       cruise.id <- seaflow.meta[which(seaflow.meta$cruise == cruise),'Cruise ID']
-      print(cruise)
 
   df$cruise <- unlist(cruise.id)
   df$inst <- inst
@@ -64,11 +64,6 @@ read_sfl <- function(x){
 # load SFL
 list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
-
-
-
-
-
 
 
 # Bin data by "1 hour"
@@ -129,7 +124,9 @@ sfl2 <- subset(sfl, cruise == "TN248" |
                     cruise == "KOK1609" |
                     cruise == "KM1708" |
                     cruise == "KM1709" |
-                    cruise == "KOK1806"
+                    cruise == "KOK1806" |
+                    cruise == "FK180310-1" |
+                    cruise == "FK180310-2"
                   )
 
 
@@ -165,6 +162,8 @@ sfl4 <- sfl2 %>%
         summarise(samples=length(cruise))
 sum(sfl4$samples)
 
+nrow(sfl2)
+
 # number of samples per degree LAT/LON
 sfl3 <- sfl2 %>%
         group_by(LAT=round(LAT), LON=round(LON)) %>%
@@ -180,4 +179,4 @@ sfl3 <- sfl2 %>%
           geom_point(aes(x=-158, y=23), col='red3',size=2, pch=0)
       p
 
-      ggsave("Figure1.png", width=6, height=6, unit='in', dpi=300)
+      ggsave("/Volumes/GoogleDrive/My Drive/manuscript_ScientificData/Figure1.png", width=6, height=6, unit='in', dpi=300)
