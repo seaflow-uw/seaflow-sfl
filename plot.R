@@ -65,6 +65,13 @@ read_sfl <- function(x){
 list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 
+# Bin data by cruise
+sfl1 <- sfl %>%
+        group_by(cruise) %>%
+        summarise(LAT = mean(LAT, na.rm=T), LON = mean(LON, na.rm=T),DATE=mean(DATE, na.rm=T), N=length(DATE))
+sfl1 <- sfl1[order(sfl1$DATE),]
+
+plot(sfl1$DATE, cumsum(sfl1$N),type='o',pch=21, col='red3', bg='lightblue', xlab=NA, ylab="Number of cruises", las=1)
 
 # Bin data by "1 hour"
 sfl2 <- sfl %>%
@@ -147,7 +154,6 @@ flush.console()
 # Sum distance along track
 id <- which(20*D*0.00053996 > 20) # 1 m = 0.00053996 knots (nautical mile / h)
 print(paste(round(sum(D[-id]/1000, na.rm=T)), "km covered"))
-hist(D[-id]/1000)
 
 # Speed of ship while underway
 id2 <- which(20*D*0.00053996 > 20 | D/1000 < 0.2)
@@ -162,7 +168,6 @@ sfl4 <- sfl2 %>%
         summarise(samples=length(cruise))
 sum(sfl4$samples)
 
-nrow(sfl2)
 
 # number of samples per degree LAT/LON
 sfl3 <- sfl2 %>%
