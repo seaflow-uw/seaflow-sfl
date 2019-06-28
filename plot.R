@@ -184,4 +184,4 @@ sfl3 <- sfl2 %>%
           geom_point(aes(x=-158, y=23), col='red3',size=2, pch=0)
       p
 
-      ggsave("/Volumes/GoogleDrive/My Drive/manuscript_ScientificData/Figure1.png", width=6, height=6, unit='in', dpi=300)
+#     ggsave("/Volumes/GoogleDrive/My Drive/manuscript_ScientificData/Figure1.png", width=6, height=6, unit='in', dpi=300)
