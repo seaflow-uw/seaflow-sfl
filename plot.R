@@ -70,8 +70,7 @@ sfl1 <- sfl %>%
         group_by(cruise) %>%
         summarise(LAT = mean(LAT, na.rm=T), LON = mean(LON, na.rm=T),DATE=mean(DATE, na.rm=T), N=length(DATE))
 sfl1 <- sfl1[order(sfl1$DATE),]
-
-plot(sfl1$DATE, cumsum(sfl1$N),type='o',pch=21, col='red3', bg='lightblue', xlab=NA, ylab="Number of cruises", las=1)
+# plot(sfl1$DATE, cumsum(sfl1$N),type='o',pch=21, col='red3', bg='lightblue', xlab=NA, ylab="Number of cruises", las=1)
 
 # Bin data by "1 hour"
 sfl2 <- sfl %>%
@@ -86,6 +85,7 @@ sfl2$cruise <- factor(sfl2$cruise, levels = unique(sfl2$cruise))
 p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
   layout(showlegend=T, legend = list(orientation='h', alpha=1), geo = geo)
 p
+
 #save static plot (png)
 plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
 
