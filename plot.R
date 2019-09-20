@@ -65,6 +65,9 @@ read_sfl <- function(x){
 list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 
+
+
+
 # Bin data by cruise
 sfl1 <- sfl %>%
         group_by(cruise) %>%
@@ -87,7 +90,7 @@ p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pa
 p
 
 #save static plot (png)
-plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
+plotly_IMAGE(p, format = "pdf", out_file = "cruise-track.pdf", width = 1000, height = 1000)
 
 #save dynamic plot (html)
 htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
@@ -184,4 +187,4 @@ sfl3 <- sfl2 %>%
           geom_point(aes(x=-158, y=23), col='red3',size=2, pch=0)
       p
 
-#     ggsave("/Volumes/GoogleDrive/My Drive/manuscript_ScientificData/Figure1.png", width=6, height=6, unit='in', dpi=300)
+#     ggsave("/Volumes/GoogleDrive/My Drive/manuscript_ScientificData/Latex/Figure1.pdf", width=6, height=6)
