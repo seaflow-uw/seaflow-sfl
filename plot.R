@@ -1,7 +1,9 @@
+#install.packages("googlesheets4")
+
 library(tidyverse)
 library(plotly)
 library(viridis)
-library(googlesheets)
+library(googlesheets4)
 
 setwd("~/Documents/DATA/Codes/seaflow-sfl/")
 
@@ -36,7 +38,7 @@ geo <- list(
 
 
 # Get official cruise ID
-seaflow.meta <- gs_read(gs_title("SeaFlow\ instrument\ log", verbose = FALSE))
+seaflow.meta <- read_sheet("https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4")
 
 
 
@@ -60,32 +62,76 @@ read_sfl <- function(x){
 
 
 
-
-# load SFL
+################
+### load SFL ###
+################
 list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 
 
+#################
+### FUN FACTS ###
+#################
+# Number of cruises
+print(paste(length(unique(sfl$cruise)), "cruises"))
+
+# Number of data files
+print(paste(length(unique(sfl$DATE)), "data files collected"))
+
+# Hours of observations
+df <- sfl %>%
+            group_by(cruise, DATE= cut(DATE, breaks="1 hour")) 
+print(paste(length(unique(df$DATE)), "hours of observations"))
+
+# Distance covered
+library(geosphere)
+    D <- NULL
+    for(i in 2:nrow(sfl)){
+    message(round(100*i/nrow(sfl)), "% completed \r", appendLF=FALSE)
+    d <- distm(sfl[(i-1):i,c("LON","LAT")], fun = distHaversine)[1,2]
+    D <- c(D, d)
+    flush.console()
+    }
+    # Sum distance along track
+    id <- which(20*D*0.00053996 > 20) # 1 m = 0.00053996 knots (nautical mile / h)
+    print(paste(round(sum(D[-id]/1000, na.rm=T)), "km covered"))
+
+    # Speed of ship while underway
+    id2 <- which(20*D*0.00053996 > 20 | D/1000 < 0.2)
+    print(paste(round(mean(D[-id2]/1000, na.rm=T),1), "km covered in 3 minutes"))
+    print(paste(round(sum(D[-id2]/1000, na.rm=T)), "km covered while underway"))
+    print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
 
 
-# Bin data by cruise
-sfl1 <- sfl %>%
-        group_by(cruise) %>%
-        summarise(LAT = mean(LAT, na.rm=T), LON = mean(LON, na.rm=T),DATE=mean(DATE, na.rm=T), N=length(DATE))
-sfl1 <- sfl1[order(sfl1$DATE),]
-# plot(sfl1$DATE, cumsum(sfl1$N),type='o',pch=21, col='red3', bg='lightblue', xlab=NA, ylab="Number of cruises", las=1)
+# files collected per cruise
+sfl4 <- sfl %>%
+        group_by(cruise=cruise) %>%
+        summarise(samples=length(cruise))
+sum(sfl4$samples)
 
-# Bin data by "1 hour"
-sfl2 <- sfl %>%
-        group_by(cruise, DATE= cut(DATE, breaks="1 hour")) %>%
-        summarise(LAT = mean(LAT, na.rm=T), LON = mean(LON, na.rm=T))
+
+# number of samples per degree LAT/LON
+sfl3 <- sfl %>%
+        group_by(LAT=round(LAT), LON=round(LON)) %>%
+        summarise(datafiles=length(LAT))
+
+
+
+
+
+
+
+
+#### PLOTTING
+df <- sfl %>%
+            group_by(LAT=round(LAT,0), LON=round(LON,0)) 
 
 # order cruise list chronologically
-sfl2 <- sfl2[order(sfl2$DATE),]
-sfl2$cruise <- factor(sfl2$cruise, levels = unique(sfl2$cruise))
+df <- df[order(df$DATE),]
+df$cruise <- factor(df$cruise, levels = unique(df$cruise))
 
 #plot
-p <- plot_geo(sfl2, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
+p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
   layout(showlegend=T, legend = list(orientation='h', alpha=1), geo = geo)
 p
 
@@ -103,88 +149,3 @@ htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
 
 
 
-
-
-
-### DATA shared on Zenodo (as published in ScientificData)
-
-
-sfl2 <- subset(sfl, cruise == "TN248" |
-                    cruise == "CN11ID" |
-                    cruise == "TN271" |
-                    cruise == "TN280" |
-                    cruise == "CN12ID" |
-                    cruise == "TN292" |
-                    cruise == "CN13ID" |
-                    cruise == "KM1427" |
-                    cruise == "KM1427" |
-                    cruise == "KM1502" |
-                    cruise == "KM1508" |
-                    cruise == "KM1510" |
-                    cruise == "KM1512" |
-                    cruise == "KOK1512" |
-                    cruise == "KOK1515" |
-                    cruise == "KM1518" |
-                    cruise == "KM1601" |
-                    cruise == "KM1602" |
-                    cruise == "KM1603" |
-                    cruise == "KOK1604" |
-                    cruise == "HOE-Legacy 4" |
-                    cruise == "KOK1608" |
-                    cruise == "KOK1609" |
-                    cruise == "KM1708" |
-                    cruise == "KM1709" |
-                    cruise == "KOK1806" |
-                    cruise == "FK180310-1" |
-                    cruise == "FK180310-2"
-                  )
-
-
-# Number of data file
-print(paste(nrow(sfl2), "data files collected"))
-
-# Distance covered
-library(geosphere)
-
-D <- NULL
-for(i in 2:nrow(sfl2)){
-message(round(100*i/nrow(sfl2)), "% completed \r", appendLF=FALSE)
-d <- distm(sfl2[(i-1):i,c("LON","LAT")], fun = distHaversine)[1,2]
-D <- c(D, d)
-flush.console()
-}
-
-# Sum distance along track
-id <- which(20*D*0.00053996 > 20) # 1 m = 0.00053996 knots (nautical mile / h)
-print(paste(round(sum(D[-id]/1000, na.rm=T)), "km covered"))
-
-# Speed of ship while underway
-id2 <- which(20*D*0.00053996 > 20 | D/1000 < 0.2)
-print(paste(round(mean(D[-id2]/1000, na.rm=T),1), "km covered in 3 minutes"))
-print(paste(round(sum(D[-id2]/1000, na.rm=T)), "km covered while underway"))
-print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
-
-
-# files collected per cruise
-sfl4 <- sfl2 %>%
-        group_by(cruise=cruise) %>%
-        summarise(samples=length(cruise))
-sum(sfl4$samples)
-
-
-# number of samples per degree LAT/LON
-sfl3 <- sfl2 %>%
-        group_by(LAT=round(LAT), LON=round(LON)) %>%
-        summarise(datafiles=length(LAT))
-
-      p <- sfl3 %>%
-          ggplot() + geom_point(ggplot2::aes_string('LON', 'LAT', col='datafiles'), size=2, pch=15, alpha=1,show.legend=T) +
-          borders('world', fill = 'gray80') +
-          labs(x='Longitude (E)', y= 'Latitude (N)') +
-          coord_fixed(ratio = 1, xlim = c(-170,-110), ylim=c(10,60)) +
-          scale_color_gradientn(colours=viridis::viridis(100), trans='log10') +
-          theme_bw() +
-          geom_point(aes(x=-158, y=23), col='red3',size=2, pch=0)
-      p
-
-#     ggsave("/Volumes/GoogleDrive/My Drive/manuscript_ScientificData/Latex/Figure1.pdf", width=6, height=6)
