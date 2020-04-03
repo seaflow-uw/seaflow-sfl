@@ -8,7 +8,7 @@ Each SFL file contains the following information:
 
 - DATE: data and time in GMT
 
-- FILE DURATION: acquisition time (sec), usually set at 180
+- FILE DURATION: acquisition time (sec)
 
 - LAT: latitude (deg N)
 
