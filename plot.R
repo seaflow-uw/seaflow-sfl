@@ -103,20 +103,23 @@ library(geosphere)
     print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
 
 
-# files collected per cruise
-sfl4 <- sfl %>%
-        group_by(cruise=cruise) %>%
-        summarise(samples=length(cruise))
-sum(sfl4$samples)
-
-
 # number of samples per degree LAT/LON
 sfl3 <- sfl %>%
         group_by(LAT=round(LAT), LON=round(LON)) %>%
         summarise(datafiles=length(LAT))
 
+# files collected per cruise
+sfl4 <- sfl %>%
+  group_by(cruise=cruise) %>%
+  summarise(samples=length(cruise))
+sum(sfl4$samples)
 
-
+# number of cruises over time
+sfl5 <- sfl %>%
+  group_by(cruise) %>%
+  summarise(DATE=mean(DATE))
+sfl5 <- sfl5[order(sfl5$DATE),]
+plot(sfl5$DATE, 1:nrow(sfl5), pch=21, bg='red3', cex=2, type="o", lty=2, ylab="# Cruises", xlab="year")  
 
 
 
@@ -124,7 +127,7 @@ sfl3 <- sfl %>%
 
 #### PLOTTING
 df <- sfl %>%
-            group_by(LAT=round(LAT,0), LON=round(LON,0)) 
+            group_by(LAT=round(LAT,1), LON=round(LON,1)) 
 
 # order cruise list chronologically
 df <- df[order(df$DATE),]
