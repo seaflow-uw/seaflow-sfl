@@ -31,4 +31,4 @@ Each SFL file contains the following information:
 
 ![alt text](cruise-track.png "SeaFlow cruise tracks")
 
-***François Ribalet, Chris Berthiaume, Annette Hynes, Sophie Clayton, Megan Schatz and Jarred Swalwell contributed to this project***
+***François Ribalet, Chris Berthiaume, Annette Hynes, Jordan Winter, Sophie Clayton, Megan Schatz and Jarred Swalwell contributed to this project***
