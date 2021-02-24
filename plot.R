@@ -4,8 +4,9 @@ library(tidyverse)
 library(plotly)
 library(viridis)
 library(googlesheets4)
+options(browser="/usr/bin/firefox")
 
-setwd("~/Documents/DATA/Codes/seaflow-sfl/")
+setwd("~/Documents/Codes/seaflow-sfl/")
 
 geo <- list(
   showland = TRUE,
@@ -38,7 +39,7 @@ geo <- list(
 
 
 # Get official cruise ID
-seaflow.meta <- read_sheet("https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4")
+seaflow.meta <- read_sheet("https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4/edit?usp=sharing")
 
 
 
@@ -79,9 +80,14 @@ print(paste(length(unique(sfl$cruise)), "cruises"))
 print(paste(length(unique(sfl$DATE)), "data files collected"))
 
 # Hours of observations
+sfl$PAR <- as.numeric(sfl$PAR)
 df <- sfl %>%
-            group_by(cruise, DATE= cut(DATE, breaks="1 hour")) 
+            group_by(cruise, DATE= cut(DATE, breaks="1 hour")) %>%
+            summarise_all(mean)
+
 print(paste(length(unique(df$DATE)), "hours of observations"))
+
+write_csv(df[,c("DATE","LAT","LON","PAR")], "~/Desktop/SeaFlow_coordinates.csv")
 
 # Distance covered
 library(geosphere)
@@ -122,12 +128,30 @@ sfl5 <- sfl5[order(sfl5$DATE),]
 plot(sfl5$DATE, 1:nrow(sfl5), pch=21, bg='red3', cex=2, type="o", lty=2, ylab="# Cruises", xlab="year")  
 
 
+## CHANGE POINT detection (Corinne's paper)
+
+sfl2 <- sfl %>% filter(cruise == "DeepDOM" | 
+              cruise == "KM1712" | 
+              cruise == "KM1713" | 
+              cruise == "MGL1704" | 
+              cruise == "SCOPE_16" | 
+              cruise == "SCOPE_2" | 
+              cruise == "Thompson_12" | 
+              cruise == "Thompson_1" | 
+              cruise == "Thompson_9" |
+              cruise == "Tokyo_1" | 
+              cruise == "Tokyo_2" | 
+              cruise == "Tokyo_3") %>%
+              filter(SALINITY < 50 & SALINITY > 20) %>%
+              ggplot(aes(SALINITY)) + 
+              geom_histogram(na.rm=T)
 
 
 
 #### PLOTTING
 df <- sfl %>%
-            group_by(LAT=round(LAT,1), LON=round(LON,1)) 
+            group_by(LAT=round(LAT,1), LON=round(LON,1), cruise) %>%
+            summarise_all(mean)
 
 # order cruise list chronologically
 df <- df[order(df$DATE),]
@@ -139,7 +163,10 @@ p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(
 p
 
 #save static plot (png)
-plotly_IMAGE(p, format = "pdf", out_file = "cruise-track.pdf", width = 1000, height = 1000)
+Sys.setenv("plotly_username" = "ribalet")
+Sys.setenv("plotly_api_key" = "svt75uksF9i1jgIljK63")
+
+plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
 
 #save dynamic plot (html)
 htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
