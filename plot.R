@@ -70,6 +70,51 @@ list.sfl <- list.files("curated", pattern=".sfl", full.names=T)
 sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 
 
+
+#### PLOTTING
+df <- sfl %>%
+            group_by(LAT=round(LAT,1), LON=round(LON,1), cruise) %>%
+            summarise_all(mean)
+
+# order cruise list chronologically
+df <- df[order(df$DATE),]
+df$cruise <- factor(df$cruise, levels = unique(df$cruise))
+
+#plot
+p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
+  layout(showlegend=T, legend = list(orientation='h', alpha=1), geo = geo)
+p
+
+#save static plot (png)
+Sys.setenv("plotly_username" = "ribalet")
+Sys.setenv("plotly_api_key" = "svt75uksF9i1jgIljK63")
+
+plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
+
+#save dynamic plot (html)
+htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #################
 ### FUN FACTS ###
 #################
@@ -145,33 +190,6 @@ sfl2 <- sfl %>% filter(cruise == "DeepDOM" |
               filter(SALINITY < 50 & SALINITY > 20) %>%
               ggplot(aes(SALINITY)) + 
               geom_histogram(na.rm=T)
-
-
-
-#### PLOTTING
-df <- sfl %>%
-            group_by(LAT=round(LAT,1), LON=round(LON,1), cruise) %>%
-            summarise_all(mean)
-
-# order cruise list chronologically
-df <- df[order(df$DATE),]
-df$cruise <- factor(df$cruise, levels = unique(df$cruise))
-
-#plot
-p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
-  layout(showlegend=T, legend = list(orientation='h', alpha=1), geo = geo)
-p
-
-#save static plot (png)
-Sys.setenv("plotly_username" = "ribalet")
-Sys.setenv("plotly_api_key" = "svt75uksF9i1jgIljK63")
-
-plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
-
-#save dynamic plot (html)
-htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
-
-
 
 
 
