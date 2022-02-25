@@ -4,7 +4,7 @@ library(tidyverse)
 library(plotly)
 library(viridis)
 library(googlesheets4)
-options(browser="/usr/bin/firefox")
+options(browser="/usr/bin/brave")
 
 setwd("~/Documents/Codes/seaflow-sfl/")
 
@@ -39,7 +39,9 @@ geo <- list(
 
 
 # Get official cruise ID
-seaflow.meta <- read_sheet("https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4/edit?usp=sharing")
+# googledrive::drive_auth()
+# gs4_auth(token = googledrive::drive_token())
+seaflow.meta <- read_sheet("https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4")
 
 
 
@@ -82,7 +84,7 @@ df$cruise <- factor(df$cruise, levels = unique(df$cruise))
 
 #plot
 p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
-  layout(showlegend=T, legend = list(orientation='h', alpha=1), geo = geo)
+  layout(showlegend=F, legend = list(orientation='h', alpha=1), geo = geo)
 p
 
 #save static plot (png)
@@ -98,13 +100,29 @@ htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
 
 
 
+##### ADD BACKGROUND TO IMAGE
 
+library(ncdf4)
+path <- "~/Documents/Projects/SF_GRADIENTS/Gradient-1.0/"
 
+file.chl <- list.files(path, pattern="CHL", full.name=T)
+nc <- open.nc(file.chl[2])
+    dat <- read.nc(nc)
+    z <- dat$chlor_a
+    z <- dat$chl_oc3
+    ylat <-rev(dat$lat)
+    xlon <-dat$lon
+    z <- z[,length(ylat):1]
+    z[which(z > 30)] <- 30
+    z[which( z < 0.01)] <- 0.01
 
+plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors= "red3", alpha=0.5) %>%
+  layout(showlegend=F, legend = list(orientation='h', alpha=1), geo = geo) %>%
+  add_trace(data=z, y= ylat, x= xlon)
 
-
-
-
+plot_ly(z = z, type = "surface") %>% 
+  add_trace(data = df, x = x, y = y, z = z, mode = "markers", type = "scatter3d", 
+            marker = list(size = 5, color = "red", symbol = 104))
 
 
 
@@ -159,11 +177,11 @@ sfl3 <- sfl %>%
         group_by(LAT=round(LAT), LON=round(LON)) %>%
         summarise(datafiles=length(LAT))
 
-# files collected per cruise
+# samples collected
 sfl4 <- sfl %>%
   group_by(cruise=cruise) %>%
   summarise(samples=length(cruise))
-sum(sfl4$samples)
+print(paste(sum(sfl4$samples), " samples collected"))
 
 # number of cruises over time
 sfl5 <- sfl %>%
@@ -173,27 +191,5 @@ sfl5 <- sfl5[order(sfl5$DATE),]
 plot(sfl5$DATE, 1:nrow(sfl5), pch=21, bg='red3', cex=2, type="o", lty=2, ylab="# Cruises", xlab="year")  
 
 
-## CHANGE POINT detection (Corinne's paper)
-
-sfl2 <- sfl %>% filter(cruise == "DeepDOM" | 
-              cruise == "KM1712" | 
-              cruise == "KM1713" | 
-              cruise == "MGL1704" | 
-              cruise == "SCOPE_16" | 
-              cruise == "SCOPE_2" | 
-              cruise == "Thompson_12" | 
-              cruise == "Thompson_1" | 
-              cruise == "Thompson_9" |
-              cruise == "Tokyo_1" | 
-              cruise == "Tokyo_2" | 
-              cruise == "Tokyo_3") %>%
-              filter(SALINITY < 50 & SALINITY > 20) %>%
-              ggplot(aes(SALINITY)) + 
-              geom_histogram(na.rm=T)
-
-
-
-
-
-
-
+# Total number of EVT particles counted
+sum(sfl[,c("EVENT RATE")] * 180) * 10^-9
