@@ -39,8 +39,8 @@ geo <- list(
 
 
 # Get official cruise ID
-# googledrive::drive_auth()
-# gs4_auth(token = googledrive::drive_token())
+googledrive::drive_auth()
+gs4_auth(token = googledrive::drive_token())
 seaflow.meta <- read_sheet("https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4")
 
 
@@ -152,26 +152,6 @@ print(paste(length(unique(df$DATE)), "hours of observations"))
 
 write_csv(df[,c("DATE","LAT","LON","PAR")], "~/Desktop/SeaFlow_coordinates.csv")
 
-# Distance covered
-library(geosphere)
-    D <- NULL
-    for(i in 2:nrow(sfl)){
-    message(round(100*i/nrow(sfl)), "% completed \r", appendLF=FALSE)
-    d <- distm(sfl[(i-1):i,c("LON","LAT")], fun = distHaversine)[1,2]
-    D <- c(D, d)
-    flush.console()
-    }
-    # Sum distance along track
-    id <- which(20*D*0.00053996 > 20) # 1 m = 0.00053996 knots (nautical mile / h)
-    print(paste(round(sum(D[-id]/1000, na.rm=T)), "km covered"))
-
-    # Speed of ship while underway
-    id2 <- which(20*D*0.00053996 > 20 | D/1000 < 0.2)
-    print(paste(round(mean(D[-id2]/1000, na.rm=T),1), "km covered in 3 minutes"))
-    print(paste(round(sum(D[-id2]/1000, na.rm=T)), "km covered while underway"))
-    print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
-
-
 # number of samples per degree LAT/LON
 sfl3 <- sfl %>%
         group_by(LAT=round(LAT), LON=round(LON)) %>%
@@ -193,3 +173,23 @@ plot(sfl5$DATE, 1:nrow(sfl5), pch=21, bg='red3', cex=2, type="o", lty=2, ylab="#
 
 # Total number of EVT particles counted
 sum(sfl[,c("EVENT RATE")] * 180) * 10^-9
+
+# Distance covered
+library(geosphere)
+    D <- NULL
+    for(i in 2:nrow(sfl)){
+    message(round(100*i/nrow(sfl)), "% completed \r", appendLF=FALSE)
+    d <- distm(sfl[(i-1):i,c("LON","LAT")], fun = distHaversine)[1,2]
+    D <- c(D, d)
+    flush.console()
+    }
+    # Sum distance along track
+    id <- which(20*D*0.00053996 > 20) # 1 m = 0.00053996 knots (nautical mile / h)
+    print(paste(round(sum(D[-id]/1000, na.rm=T)), "km covered"))
+
+    # Speed of ship while underway
+    id2 <- which(20*D*0.00053996 > 20 | D/1000 < 0.2)
+    print(paste(round(mean(D[-id2]/1000, na.rm=T),1), "km covered in 3 minutes"))
+    print(paste(round(sum(D[-id2]/1000, na.rm=T)), "km covered while underway"))
+    print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
+
