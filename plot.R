@@ -39,9 +39,8 @@ geo <- list(
 
 
 # Get official cruise ID
-googledrive::drive_auth()
-gs4_auth(token = googledrive::drive_token())
-seaflow.meta <- read_sheet("https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4")
+googlesheets4::gs4_deauth()
+seaflow.meta <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1Tsi7OWIZWfCQJqLDpId2aG_i-8Cp-p63PYjjvDkOtH4')
 
 
 
