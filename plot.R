@@ -4,7 +4,6 @@ library(tidyverse)
 library(plotly)
 library(viridis)
 library(googlesheets4)
-options(browser="/usr/bin/brave")
 
 setwd("~/Documents/Codes/seaflow-sfl/")
 
