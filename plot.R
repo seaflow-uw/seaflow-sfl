@@ -98,96 +98,71 @@ htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
 
 
 
-##### ADD BACKGROUND TO IMAGE
-
-library(ncdf4)
-path <- "~/Documents/Projects/SF_GRADIENTS/Gradient-1.0/"
-
-file.chl <- list.files(path, pattern="CHL", full.name=T)
-nc <- open.nc(file.chl[2])
-    dat <- read.nc(nc)
-    z <- dat$chlor_a
-    z <- dat$chl_oc3
-    ylat <-rev(dat$lat)
-    xlon <-dat$lon
-    z <- z[,length(ylat):1]
-    z[which(z > 30)] <- 30
-    z[which( z < 0.01)] <- 0.01
-
-plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors= "red3", alpha=0.5) %>%
-  layout(showlegend=F, legend = list(orientation='h', alpha=1), geo = geo) %>%
-  add_trace(data=z, y= ylat, x= xlon)
-
-plot_ly(z = z, type = "surface") %>% 
-  add_trace(data = df, x = x, y = y, z = z, mode = "markers", type = "scatter3d", 
-            marker = list(size = 5, color = "red", symbol = 104))
-
-
-
-
-
-
-
-
-
 
 #################
 ### FUN FACTS ###
 #################
-# Number of cruises
-print(paste(length(unique(sfl$cruise)), "cruises"))
+max_distance_3min <- 14 / (0.53996 * 20) # top speed 14 knots (1 km = 0.53996 knots (nautical mile / h) or ~ 26 km / h, equivalent to 1.3 km / 3 min
 
-# Number of data files
-print(paste(length(unique(sfl$DATE)), "data files collected"))
-
-# Hours of observations
-sfl$PAR <- as.numeric(sfl$PAR)
-df <- sfl %>%
-            group_by(cruise, DATE= cut(DATE, breaks="1 hour")) %>%
-            summarise_all(mean)
-
-print(paste(length(unique(df$DATE)), "hours of observations"))
-
-write_csv(df[,c("DATE","LAT","LON","PAR")], "~/Desktop/SeaFlow_coordinates.csv")
-
-# number of samples per degree LAT/LON
-sfl3 <- sfl %>%
-        group_by(LAT=round(LAT), LON=round(LON)) %>%
-        summarise(datafiles=length(LAT))
-
-# samples collected
-sfl4 <- sfl %>%
-  group_by(cruise=cruise) %>%
-  summarise(samples=length(cruise))
-print(paste(sum(sfl4$samples), " samples collected"))
-
-# number of cruises over time
-sfl5 <- sfl %>%
-  group_by(cruise) %>%
-  summarise(DATE=mean(DATE))
-sfl5 <- sfl5[order(sfl5$DATE),]
-plot(sfl5$DATE, 1:nrow(sfl5), pch=21, bg='red3', cex=2, type="o", lty=2, ylab="# Cruises", xlab="year")  
+sfl_fun <- sfl %>% 
+  filter(!is.na(LON)) %>%
+  mutate(lat = LAT,
+         lon = case_when(LON <= 0 ~ LON + 360,
+                         TRUE ~ LON)) %>%
+  filter(lon > 100) %>% # Bad GPS coordinates
+  arrange(DATE) %>%
+  mutate(raw_distance = c(0, geosphere::distHaversine(as.matrix(sfl[,c("lon","lat")]))/1000), # in km
+         # to prevent distance to exceed max distance
+         distance = case_when(raw_distance > max_distance_3min ~ max_distance_3min, 
+                              TRUE ~ raw_distance), 
+        total_distance = cumsum(distance)) %>%
+  mutate(`EVENT RATE` = case_when(`EVENT RATE` < 3000 ~ median(`EVENT RATE`), 
+                                  TRUE ~ `EVENT RATE`),
+         particles = `EVENT RATE` * 180,
+         total_particles = cumsum(particles) / 10^9,
+         total_samples = row_number(),
+         total_time = total_samples * 3 / 60)
 
 
-# Total number of EVT particles counted
-sum(sfl[,c("EVENT RATE")] * 180) * 10^-9
+print(paste(length(unique(sfl_fun$cruise)), "cruises"))
+print(paste(round(max(sfl_fun$total_distance)), "km travelled"))
+print(paste(max(sfl_fun$total_samples), "samples collected"))
+print(paste(round(max(sfl_fun$total_time)), "hours of observations"))
+print(paste(round(max(sfl_fun$total_particles)), "x 10^9 particles"))
 
-# Distance covered
-library(geosphere)
-    D <- NULL
-    for(i in 2:nrow(sfl)){
-    message(round(100*i/nrow(sfl)), "% completed \r", appendLF=FALSE)
-    d <- distm(sfl[(i-1):i,c("LON","LAT")], fun = distHaversine)[1,2]
-    D <- c(D, d)
-    flush.console()
-    }
-    # Sum distance along track
-    id <- which(20*D*0.00053996 > 20) # 1 m = 0.00053996 knots (nautical mile / h)
-    print(paste(round(sum(D[-id]/1000, na.rm=T)), "km covered"))
 
-    # Speed of ship while underway
-    id2 <- which(20*D*0.00053996 > 20 | D/1000 < 0.2)
-    print(paste(round(mean(D[-id2]/1000, na.rm=T),1), "km covered in 3 minutes"))
-    print(paste(round(sum(D[-id2]/1000, na.rm=T)), "km covered while underway"))
-    print(paste(round(mean(20*D[-id2]*0.00053996, na.rm=T),1), "knots on average"))
+colourCount = length(unique(sfl_fun$cruise))
+getPalette = colorRampPalette(rev(RColorBrewer::brewer.pal(9, "Set1")))
+
+a <- sfl_fun %>% ggplot() +
+  geom_point(aes(DATE, total_distance, col = cruise)) +
+  theme_bw() +
+  scale_color_manual(values = getPalette(colourCount)) +
+  ylab("Distance travelled (km)") +
+  xlab("year")  
+
+b <- sfl_fun %>% ggplot() +
+  geom_point(aes(DATE, total_samples / 1000, col = cruise)) +
+  theme_bw() +
+  scale_color_manual(values = getPalette(colourCount)) +
+  ylab("Numbers of Files (10^3)") +
+  xlab("year")  
+
+c <- sfl_fun %>% ggplot() +
+  geom_point(aes(DATE, total_time, col = cruise)) +
+  theme_bw() +
+  scale_color_manual(values = getPalette(colourCount)) +
+  ylab("Hours of Observations (h)") +
+  xlab("year")  
+
+d <- sfl_fun %>% ggplot() +
+  geom_point(aes(DATE, total_particles, col = cruise)) +
+  theme_bw() +
+  scale_color_manual(values = getPalette(colourCount)) +
+  ylab("Number of Particles (10^9)") +
+  xlab("year")  
+
+png("sfl_funfacts.png",  width = 4000, height = 2000, res = 300)
+ggpubr::ggarrange(a, c, b ,d, ncol = 2, nrow = 2, common.legend = TRUE, legend="right")
+dev.off()
 
