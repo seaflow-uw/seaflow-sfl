@@ -139,28 +139,28 @@ a <- sfl_fun %>% ggplot() +
   theme_bw() +
   scale_color_manual(values = getPalette(colourCount)) +
   ylab("Distance travelled (km)") +
-  xlab("year")  
+  xlab("time")  
 
 b <- sfl_fun %>% ggplot() +
   geom_point(aes(DATE, total_samples / 1000, col = cruise)) +
   theme_bw() +
   scale_color_manual(values = getPalette(colourCount)) +
-  ylab("Numbers of Files (10^3)") +
-  xlab("year")  
+  ylab(expression(paste("Files collected (x 10"^{3},")"))) + 
+  xlab("time")  
 
 c <- sfl_fun %>% ggplot() +
   geom_point(aes(DATE, total_time, col = cruise)) +
   theme_bw() +
   scale_color_manual(values = getPalette(colourCount)) +
   ylab("Hours of Observations (h)") +
-  xlab("year")  
+  xlab("time")  
 
 d <- sfl_fun %>% ggplot() +
   geom_point(aes(DATE, total_particles, col = cruise)) +
   theme_bw() +
   scale_color_manual(values = getPalette(colourCount)) +
-  ylab("Number of Particles (10^9)") +
-  xlab("year")  
+  ylab(expression(paste("Particles measured (x 10"^{9},")"))) + 
+  xlab("time")  
 
 png("sfl_funfacts.png",  width = 4000, height = 2000, res = 300)
 ggpubr::ggarrange(a, c, b ,d, ncol = 2, nrow = 2, common.legend = TRUE, legend="right")
