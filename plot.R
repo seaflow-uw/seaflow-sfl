@@ -76,10 +76,10 @@ df <- sfl %>%
             group_by(LAT=round(LAT,1), LON=round(LON,1), cruise) %>%
             summarise_all(mean) %>%
   arrange(DATE) %>%
-  mutate(cruise = factor(cruise, levels = unique(df$cruise)))
+  mutate(cruise = factor(cruise, levels = unique(cruise)))
 
 #plot
-p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
+p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D", direction = -1)(100), alpha=0.5) %>%
   layout(showlegend=F, legend = list(orientation='h', alpha=1), geo = geo)
 p
 
