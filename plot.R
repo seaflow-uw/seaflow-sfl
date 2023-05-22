@@ -19,8 +19,8 @@ geo <- list(
   projection = list(
     type = 'orthographic',
     rotation = list(
-      lon = -100,
-      lat = 40,
+      lon = -160,
+      lat = 30,
       roll = 0
     )
   ),
@@ -74,11 +74,9 @@ sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 #### PLOTTING
 df <- sfl %>%
             group_by(LAT=round(LAT,1), LON=round(LON,1), cruise) %>%
-            summarise_all(mean)
-
-# order cruise list chronologically
-df <- df[order(df$DATE),]
-df$cruise <- factor(df$cruise, levels = unique(df$cruise))
+            summarise_all(mean) %>%
+  arrange(DATE) %>%
+  mutate(cruise = factor(cruise, levels = unique(df$cruise)))
 
 #plot
 p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(option = "D")(100), alpha=0.5) %>%
@@ -104,13 +102,15 @@ htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
 #################
 max_distance_3min <- 14 / (0.53996 * 20) # top speed 14 knots (1 km = 0.53996 knots (nautical mile / h) or ~ 26 km / h, equivalent to 1.3 km / 3 min
 
-sfl_fun <- sfl %>% 
+sfl <- sfl %>% 
   filter(!is.na(LON)) %>%
   mutate(lat = LAT,
          lon = case_when(LON <= 0 ~ LON + 360,
                          TRUE ~ LON)) %>%
-  filter(lon > 100) %>% # Bad GPS coordinates
-  arrange(DATE) %>%
+  filter(lon > 100) # Bad GPS coordinates
+  
+sfl_fun <-  sfl %>% arrange(DATE) %>%
+  mutate(cruise = factor(cruise, levels = unique(cruise))) %>%
   mutate(raw_distance = c(0, geosphere::distHaversine(as.matrix(sfl[,c("lon","lat")]))/1000), # in km
          # to prevent distance to exceed max distance
          distance = case_when(raw_distance > max_distance_3min ~ max_distance_3min, 
@@ -119,9 +119,9 @@ sfl_fun <- sfl %>%
   mutate(`EVENT RATE` = case_when(`EVENT RATE` < 3000 ~ median(`EVENT RATE`), 
                                   TRUE ~ `EVENT RATE`),
          particles = `EVENT RATE` * 180,
-         total_particles = cumsum(particles) / 10^9,
+         total_particles = cumsum(particles) / 10^9, # billion
          total_samples = row_number(),
-         total_time = total_samples * 3 / 60)
+         total_time = total_samples * 3 / 60) # hours
 
 
 print(paste(length(unique(sfl_fun$cruise)), "cruises"))
@@ -130,39 +130,39 @@ print(paste(max(sfl_fun$total_samples), "samples collected"))
 print(paste(round(max(sfl_fun$total_time)), "hours of observations"))
 print(paste(round(max(sfl_fun$total_particles)), "x 10^9 particles"))
 
-
-colourCount = length(unique(sfl_fun$cruise))
-getPalette = colorRampPalette(rev(RColorBrewer::brewer.pal(9, "Set1")))
-
 a <- sfl_fun %>% ggplot() +
-  geom_point(aes(DATE, total_distance, col = cruise)) +
+  geom_point(aes(DATE, total_distance, col = cruise), show.legend = FALSE) +
   theme_bw() +
-  scale_color_manual(values = getPalette(colourCount)) +
-  ylab("Distance travelled (km)") +
-  xlab("time")  
+  scale_color_viridis_d() +
+  labs(x = "", y = "Distance travelled (km)") +
+  scale_x_datetime(date_breaks = "2 years", date_labels = "%Y") +
+  ggtitle(paste("Total of", round(max(sfl_fun$total_distance)/1000), "000 km travelled"))
 
 b <- sfl_fun %>% ggplot() +
-  geom_point(aes(DATE, total_samples / 1000, col = cruise)) +
+  geom_point(aes(DATE, total_samples / 1000, col = cruise), show.legend = FALSE) +
   theme_bw() +
-  scale_color_manual(values = getPalette(colourCount)) +
-  ylab(expression(paste("Files collected (x 10"^{3},")"))) + 
-  xlab("time")  
+  scale_color_viridis_d() +
+  labs(x = "", y = expression(paste("Files collected (x 10"^{3},")"))) + 
+  scale_x_datetime(date_breaks = "2 years", date_labels = "%Y") +
+  ggtitle(paste("Total of",round(max(sfl_fun$total_samples)/1000), "000 files collected"))
 
 c <- sfl_fun %>% ggplot() +
-  geom_point(aes(DATE, total_time, col = cruise)) +
+  geom_point(aes(DATE, total_time, col = cruise), show.legend = FALSE) +
   theme_bw() +
-  scale_color_manual(values = getPalette(colourCount)) +
-  ylab("Hours of Observations (h)") +
-  xlab("time")  
+  scale_color_viridis_d() +
+  labs(x = "", y = "Hours of Observations (h)") +
+  scale_x_datetime(date_breaks = "2 years", date_labels = "%Y") +
+  ggtitle(paste("Total of", round(max(sfl_fun$total_time)/24), "days of continuous observations"))
 
 d <- sfl_fun %>% ggplot() +
-  geom_point(aes(DATE, total_particles, col = cruise)) +
+  geom_point(aes(DATE, total_particles, col = cruise), show.legend = FALSE) +
   theme_bw() +
-  scale_color_manual(values = getPalette(colourCount)) +
-  ylab(expression(paste("Particles measured (x 10"^{9},")"))) + 
-  xlab("time")  
+  scale_color_viridis_d() +
+  labs(x = "", y = expression(paste("Particles measured (x 10"^{9},")"))) + 
+  scale_x_datetime(date_breaks = "2 years", date_labels = "%Y") +
+  ggtitle(paste("Total of", round(max(sfl_fun$total_particles)), "billion particles"))
 
-png("sfl_funfacts.png",  width = 4000, height = 2000, res = 300)
-ggpubr::ggarrange(a, c, b ,d, ncol = 2, nrow = 2, common.legend = TRUE, legend="right")
+png("sfl_funfacts.png",  width = 3000, height = 2000, res = 300)
+ggpubr::ggarrange(a, c, b ,d, ncol = 2, nrow = 2)
 dev.off()
 
