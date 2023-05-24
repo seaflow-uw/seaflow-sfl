@@ -30,5 +30,6 @@ Each SFL file contains the following information:
 
 
 ![alt text](cruise-track.png "SeaFlow cruise tracks")
+![alt text](sfl_funfacts.png "SeaFlow statistics")
 
 ***Annette Hynes, Jordan Winter, Chris Berthiaume and François Ribalet contributed to this project***
