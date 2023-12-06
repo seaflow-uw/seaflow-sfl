@@ -118,6 +118,7 @@ sfl_fun <-  sfl %>% arrange(DATE) %>%
                               TRUE ~ raw_distance), 
         total_distance = cumsum(distance)) %>%
   mutate(`EVENT RATE` = case_when(`EVENT RATE` < 3000 ~ median(`EVENT RATE`), 
+                                  !is.finite(`EVENT RATE`) ~ 0,
                                   TRUE ~ `EVENT RATE`),
          particles = `EVENT RATE` * 180,
          total_particles = cumsum(particles) / 10^9, # billion
