@@ -94,14 +94,16 @@ plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, hei
 htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
 
 
-
+p <- plot_geo(df, lat = ~LAT, lon = ~LON, alpha=0.5) %>%
+  layout(showlegend=F, legend = list(orientation='h', alpha=1), geo = geo)
+p
 
 
 
 #################
 ### FUN FACTS ###
 #################
-max_distance_3min <- 14 / (0.53996 * 20) # top speed 14 knots (1 km = 0.53996 knots (nautical mile / h) or ~ 26 km / h, equivalent to 1.3 km / 3 min
+max_distance_3min <-Inf # 14 / (0.53996 * 20) # top speed 14 knots (1 km = 0.53996 knots (nautical mile / h) or ~ 26 km / h, equivalent to 1.3 km / 3 min
 
 sfl <- sfl %>% 
   filter(!is.na(LON)) %>%
@@ -138,7 +140,7 @@ a <- sfl_fun %>% ggplot() +
   scale_color_viridis_d() +
   labs(x = "", y = "Distance travelled (km)") +
   scale_x_datetime(date_breaks = "2 years", date_labels = "%Y") +
-  ggtitle(paste("Total of", round(max(sfl_fun$total_distance)/1000), "000 km travelled"))
+  ggtitle(paste("Total of", round(max(sfl_fun$total_distance)/1000), "000 km traveled"))
 
 b <- sfl_fun %>% ggplot() +
   geom_point(aes(DATE, total_samples / 1000, col = cruise), show.legend = FALSE) +
@@ -168,3 +170,21 @@ png("sfl_funfacts.png",  width = 3000, height = 2000, res = 300)
 ggpubr::ggarrange(a, c, b ,d, ncol = 2, nrow = 2)
 dev.off()
 
+
+
+c <- sfl_fun %>% ggplot() +
+  geom_point(aes(DATE, total_time), show.legend = FALSE) +
+  theme_bw() +
+  labs(x = "", y = "Hours of Observations (h)") +
+  scale_x_datetime(date_breaks = "2 years", date_labels = "%Y")
+
+d <- sfl_fun %>% ggplot() +
+  geom_point(aes(DATE, total_particles), show.legend = FALSE) +
+  theme_bw() +
+  labs(x = "", y = expression(paste("Particles measured (x 10"^{9},")"))) + 
+  scale_x_datetime(date_breaks = "2 years", date_labels = "%Y")
+
+
+png("~/Desktop/Fig1.png",  width = 2000, height = 1000, res = 300)
+ggpubr::ggarrange(c, d, ncol = 2, nrow = 1)
+dev.off()
