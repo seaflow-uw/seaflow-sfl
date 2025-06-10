@@ -1,7 +1,6 @@
 #install.packages("googlesheets4")
 
 library(tidyverse)
-
 library(plotly)
 library(viridis)
 library(googlesheets4)
@@ -103,7 +102,7 @@ p
 #################
 ### FUN FACTS ###
 #################
-max_distance_3min <-Inf # 14 / (0.53996 * 20) # top speed 14 knots (1 km = 0.53996 knots (nautical mile / h) or ~ 26 km / h, equivalent to 1.3 km / 3 min
+max_distance_3min <- 14 / (0.53996 * 20)  # top speed 14 knots (1 km = 0.53996 knots (nautical mile / h) or ~ 26 km / h, equivalent to 1.3 km / 3 min
 
 sfl <- sfl %>% 
   filter(!is.na(LON)) %>%
