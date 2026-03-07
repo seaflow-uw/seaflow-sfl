@@ -73,8 +73,8 @@ sfl <- do.call(rbind, lapply(list.sfl, function(x) read_sfl(x)))
 
 #### PLOTTING
 df <- sfl %>%
-            group_by(LAT=round(LAT,1), LON=round(LON,1), cruise) %>%
-            summarise_all(mean) %>%
+  group_by(LAT=round(LAT,1), LON=round(LON,1), cruise) %>%
+  summarise_all(mean) %>%
   arrange(DATE) %>%
   mutate(cruise = factor(cruise, levels = unique(cruise)))
 
@@ -83,11 +83,6 @@ p <- plot_geo(df, lat = ~LAT, lon = ~LON, color = ~cruise, colors = viridis_pal(
   layout(showlegend=F, legend = list(orientation='h', alpha=1), geo = geo)
 p
 
-#save static plot (png)
-Sys.setenv("plotly_username" = "ribalet")
-Sys.setenv("plotly_api_key" = "svt75uksF9i1jgIljK63")
-
-plotly_IMAGE(p, format = "png", out_file = "cruise-track.png", width = 1000, height = 1000)
 
 #save dynamic plot (html)
 htmlwidgets::saveWidget(ggplotly(p), file = "cruise-track.html")
